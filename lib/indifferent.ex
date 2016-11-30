@@ -1,6 +1,15 @@
 defmodule Indifferent do
 
   @doc ~S"""
+  Creates an indifferent accessor for the given data structure.
+
+  Options can be `key_transforms:` and `value_transforms:`.
+  See `Indifferent.Transform`
+
+  `key_transforms` are a list of functions for casting indifferent keys
+  for example converting an string to an existing atom, these functions
+  must return `{:ok, new_key}` if conversion was possible.
+
   ## Examples
 
       iex> i = Indifferent.access(%{"a" => 1})
@@ -22,6 +31,10 @@ defmodule Indifferent do
 
 
   @doc ~S"""
+  Returns a function for accessing an indifferent item.
+
+  Intended to be used with Kernel access functions.
+
   ## Examples
 
       iex> Kernel.get_in(%{"a" => 1}, [Indifferent.at(:a)])
@@ -40,6 +53,8 @@ defmodule Indifferent do
   end
 
   @doc ~S"""
+  Given a data structure and a path, fetches the corresponding value.
+
   ## Examples
 
     iex> %{"a" => 1, "b" => %{"c" => 2}} |> Indifferent.path(b.c)
@@ -69,6 +84,8 @@ defmodule Indifferent do
   end
 
   @doc ~S"""
+  Returns an accessor-function for the given path, intended to be used by Kernel functions.
+
   ## Examples
 
      iex> Kernel.get_in(%{"a" => {0, 1}}, Indifferent.path(a["1"]))
@@ -94,6 +111,8 @@ defmodule Indifferent do
 
 
   @doc ~S"""
+  Auto wrap version of `Kernel.get_in`
+
   ## Examples
 
       iex> Indifferent.get_in(%{"a" => %{"x" => 1}}, [:a])
@@ -107,6 +126,8 @@ defmodule Indifferent do
   do: Kernel.get_in(access(data), keys) |> unwrap
 
   @doc ~S"""
+  Auto wrap version of `Kernel.get_and_update_in`
+
   ## Examples
 
       iex> Indifferent.get_and_update_in(%{"a" => %{"x" => 1}}, [:a, :x], fn x -> {x * 2, x * 4} end)
@@ -122,6 +143,8 @@ defmodule Indifferent do
 
 
   @doc ~S"""
+  Auto wrap version of `Kernel.pop_in`
+
   ## Examples
 
       iex> Indifferent.pop_in(%{"a" => 1}, [:a])

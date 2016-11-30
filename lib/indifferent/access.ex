@@ -17,6 +17,8 @@ defmodule Indifferent.Access do
   defstruct on: nil, key_transforms: @default_key_transforms, value_transforms: @default_value_transforms
 
   @doc ~S"""
+  Fetch an indifferent key.
+
   ## Examples
 
       iex> Indifferent.Access.fetch(%{"a" => 1}, :a)
@@ -35,6 +37,8 @@ defmodule Indifferent.Access do
 
 
   @doc ~S"""
+  Get the value under an indifferent key
+
   ## Examples
 
       iex> Indifferent.Access.get(%{"a" => 1}, :a)
@@ -55,6 +59,8 @@ defmodule Indifferent.Access do
 
 
   @doc ~S"""
+  Get and update a value under an indifferent key
+
   ## Examples
 
       iex> Indifferent.Access.get_and_update(%{a: 1}, "a", fn x -> {x * 2, x * 4} end)
@@ -69,6 +75,7 @@ defmodule Indifferent.Access do
   do: get_and_update(Indifferent.access(data), key, updater)
 
   @doc ~S"""
+  Pop the value under an indifferent key
 
   ## Examples
 
