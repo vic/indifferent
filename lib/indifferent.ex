@@ -91,23 +91,22 @@ defmodule Indifferent do
   end
 
   @doc """
-  Sets variables with the value at an indifferent path.
+  Returns a Keyword of named values at several indifferent paths.
 
   ## Examples
 
-    iex> %{"a" => 1, "b" => %{"c" => 2}} |> Indifferent.path_var(x: b.c)
-    ...> x
+    iex> [x: v] = %{"a" => 1, "b" => %{"c" => 2}} |> Indifferent.paths(x: b.c)
+    ...> v
     2
 
   """
-  defmacro path_var(data, patterns_and_paths) do
+  defmacro paths(data, names_and_paths) do
     var = Macro.var(:data, __MODULE__)
     matches =
-      for {name, path} <- patterns_and_paths,
-      do: {:=, [], [{name, [], nil}, path_quoted(var, path)]}
+      for {name, path} <- names_and_paths,
+      do: {name, path_quoted(var, path)}
     quote do
-      unquote(var) = unquote(data)
-      unquote_splicing(matches)
+      fn unquote(var) -> unquote(matches) end.(unquote(data))
     end
   end
 
