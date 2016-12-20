@@ -80,9 +80,34 @@ defmodule Indifferent do
 
   """
   defmacro path(data, path) do
+    path_quoted(data, path)
+  end
+
+  defp path_quoted(data, path) do
     keys = Indifferent.Path.expand(path)
     quote do
       Indifferent.get_in(unquote(data), unquote(keys))
+    end
+  end
+
+  @doc """
+  Sets variables with the value at an indifferent path.
+
+  ## Examples
+
+    iex> %{"a" => 1, "b" => %{"c" => 2}} |> Indifferent.path_var(x: b.c)
+    ...> x
+    2
+
+  """
+  defmacro path_var(data, patterns_and_paths) do
+    var = Macro.var(:data, __MODULE__)
+    matches =
+      for {name, path} <- patterns_and_paths,
+      do: {:=, [], [{name, [], nil}, path_quoted(var, path)]}
+    quote do
+      unquote(var) = unquote(data)
+      unquote_splicing(matches)
     end
   end
 
