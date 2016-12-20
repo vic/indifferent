@@ -14,6 +14,10 @@ defmodule Indifferent.Path do
     expand(a, []) ++ expand(b, seen)
   end
 
+  def expand(a = {:-, _, _}, seen) do
+    [a | seen]
+  end
+
   def expand({a, _, nil}, seen) do
     [a | seen]
   end
