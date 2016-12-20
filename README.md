@@ -81,4 +81,6 @@ iex> Kernel.get_in(%{"a" => {0, 2}}, Indifferent.path(a["1"]))
 # `paths` takes a Keyword of paths and returns a keyword of values
 iex> %{"b" => [1, 2]} |> Indifferent.paths(x: b[-1])
 [x: 2]
+
+
 ```
