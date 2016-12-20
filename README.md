@@ -14,7 +14,7 @@ on the type of keys (atoms or binaries) akin to the features of Rails' HashWithI
 
     ```elixir
     def deps do
-      [{:indifferent, "~> 0.3"}]
+      [{:indifferent, "~> 0.4"}]
     end
     ```
 
@@ -68,13 +68,17 @@ iex> %{"b" => %{"c" => %{"d" => %{"e" => 4}}}} |> Indifferent.path(b["c"][:d].e)
 4
 
 ##
-# And works on lists and tuples
-iex> [9, %{"c" => {:ok, %{"e" => 4}}}] |> Indifferent.path(1.c["1"].e)
+# And works on lists, tuples and keywords
+iex> [9, %{"c" => {:ok, [e: 4]}}] |> Indifferent.path(1.c["1"].e)
 4
-
 
 ##
 # And can be used with Kernel methods.
-iex> Kernel.get_in(%{"a" => {0, 1}}, Indifferent.path(a["1"]))
-1
+iex> Kernel.get_in(%{"a" => {0, 2}}, Indifferent.path(a["1"]))
+2
+
+##
+# `paths` takes a Keyword of paths and returns a keyword of values
+iex> %{"b" => [1, 2]} |> Indifferent.paths(x: b[-1])
+[x: 2]
 ```

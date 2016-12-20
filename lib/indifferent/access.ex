@@ -119,6 +119,12 @@ defmodule Indifferent.Access do
     end
   end
 
+  defp accessor(data) do
+    if Keyword.keyword?(data),
+    do: Indifferent.Accessor.Keyword,
+    else: Indifferent.Accessor
+  end
+
   defp fn_get_and_update(on, key) do
     fn :get_and_update, data, next ->
       {key, value} =
@@ -128,7 +134,7 @@ defmodule Indifferent.Access do
           _ -> {key, nil}
         end
 
-      setter = Indifferent.Accessor.setter(data, key)
+      setter = accessor(data).setter(data, key)
 
       value
       |> value_transform(on)
@@ -138,7 +144,7 @@ defmodule Indifferent.Access do
           {got, update} = {value_transform(got, on), Indifferent.unwrap(update)}
           {got, setter.(update)}
         :pop ->
-          popper = Indifferent.Accessor.popper(data, key)
+          popper = accessor(data).popper(data, key)
           popper.()
       end.()
     end
@@ -149,7 +155,7 @@ defmodule Indifferent.Access do
     |> Stream.map(fn key_transform -> key_transform.(indifferent_key, on) end)
     |> Stream.map(fn
       {:ok, key} ->
-        Indifferent.Accessor.key?(data, key) && {key, Indifferent.Accessor.getter(data, key)}
+        accessor(data).key?(data, key) && {key, accessor(data).getter(data, key)}
       _ ->
         nil
     end)

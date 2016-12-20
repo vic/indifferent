@@ -40,3 +40,12 @@ defimpl Indifferent.Accessor, for: Tuple do
   def setter(data, key) when is_integer(key), do: fn v -> put_elem(data, key, v) end
   def popper(data, key) when is_integer(key), do: fn -> {elem(data, key), Tuple.delete_at(data, key)} end
 end
+
+defmodule Indifferent.Accessor.Keyword do
+  def key?(_data, key) when not is_atom(key), do: false
+  def key?(data, key), do: Keyword.has_key?(data, key)
+
+  def getter(data, key) when is_atom(key), do: fn -> data[key] end
+  def setter(data, key) when is_atom(key), do: fn v -> Keyword.put(data, key, v) end
+  def popper(data, key) when is_atom(key), do: fn -> {data[key], Keyword.drop(data, [key])} end
+end

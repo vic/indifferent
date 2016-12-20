@@ -3,10 +3,11 @@ defmodule Indifferent.Mixfile do
 
   def project do
     [app: :indifferent,
-     version: "0.3.0",
+     version: "0.4.0",
      elixir: "~> 1.3",
      description: description,
      package: package,
+     elixirc_paths: elixirc_paths(Mix.env),
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
      deps: deps()]
@@ -18,6 +19,9 @@ defmodule Indifferent.Mixfile do
   def application do
     [applications: [:logger]]
   end
+
+  defp elixirc_paths(:test), do: ["lib", "test/support"]
+  defp elixirc_paths(_),     do: ["lib"]
 
   # Dependencies can be Hex packages:
   #
