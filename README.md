@@ -92,7 +92,7 @@ iex> Indifferent.read(System.get_env.COLOR)
 # Just like `path/2`, the `read/1` macro can also take a Keyword of named things to read
 iex> System.put_env("COLOR", "red")
 iex> Process.put(:color, "blue")
-iex> Indifferent.read(a: System.get_env.COLOR, b: Process.get.blue)
+iex> Indifferent.read(a: System.get_env.COLOR, b: Process.get.color)
 [a: "red", b: "blue"]
 
 ```
