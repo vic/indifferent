@@ -42,6 +42,8 @@ defimpl Indifferent.Accessor, for: Tuple do
 end
 
 defmodule Indifferent.Accessor.Keyword do
+  @moduledoc false
+
   def key?(_data, key) when not is_atom(key), do: false
   def key?(data, key), do: Keyword.has_key?(data, key)
 

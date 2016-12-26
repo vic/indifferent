@@ -3,28 +3,42 @@ defmodule Indifferent.Path do
   @moduledoc false
 
   def expand(path) do
-    expand(path, [])
+    [head | tail] = flatten(path)
+    [literal(head) | tail]
   end
 
-  def expand({{:., _, [Access, :get]}, _, [a, b]}, seen) do
-    expand(a, []) ++ expand(b, seen)
+  def flatten(path), do: flatten(path, [])
+
+  defp literal({a, _, x}) when is_atom(x), do: a
+  defp literal(a) when is_atom(a) or is_binary(a) or is_number(a), do: a
+
+  defp flatten({{:., _, [Access, :get]}, _, [a, b]}, seen) do
+    flatten(a, []) ++ [b | seen]
   end
 
-  def expand({{:., _, [a, b]}, _, []}, seen) do
-    expand(a, []) ++ expand(b, seen)
-  end
-
-  def expand(a = {:-, _, _}, seen) do
+  defp flatten(a = {{:., _, [{:__aliases__, _, _}, _]}, _, _}, seen) do
     [a | seen]
   end
 
-  def expand({a, _, nil}, seen) do
+  defp flatten({:__aliases__, _, [a, b]}, seen) do
+    flatten(a, []) ++ flatten(b, seen)
+  end
+
+  defp flatten({{:., _, [a, b]}, _, []}, seen) do
+    flatten(a, []) ++ flatten(b, seen)
+  end
+
+  defp flatten(a = {_, _, x}, seen) when is_list(x) do
     [a | seen]
   end
 
-  def expand([a], seen), do: expand(a, seen)
+  defp flatten(a = {_, _, x}, seen) when is_atom(x) do
+    [a | seen]
+  end
 
-  def expand(any, seen) when is_atom(any) or is_binary(any) or is_number(any) do
+  defp flatten([a], seen), do: flatten(a, seen)
+
+  defp flatten(any, seen) when is_atom(any) or is_binary(any) or is_number(any) do
     [any | seen]
   end
 

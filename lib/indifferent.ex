@@ -29,7 +29,6 @@ defmodule Indifferent do
     wrap(data, %Indifferent.Access{key_transforms: keys, value_transforms: values})
   end
 
-
   @doc ~S"""
   Returns a function for accessing an indifferent item.
 
@@ -57,30 +56,34 @@ defmodule Indifferent do
 
   ## Examples
 
-    iex> %{"a" => 1, "b" => %{"c" => 2}} |> Indifferent.path(b.c)
-    2
+      iex> %{"a" => 1, "b" => %{"c" => 2}} |> Indifferent.path(b.c)
+      2
 
-    iex> %{"b" => %{"c" => %{"d" => %{"e" => 4}}}} |> Indifferent.path(b["c"][:d].e)
-    4
+      iex> %{"b" => %{"c" => %{"d" => %{"e" => 4}}}} |> Indifferent.path(b["c"][:d].e)
+      4
 
-    iex> [1, 2] |> Indifferent.path(0)
-    1
+      iex> [1, 2] |> Indifferent.path(0)
+      1
 
-    iex> {1, 2} |> Indifferent.path(0)
-    1
+      iex> {1, 2} |> Indifferent.path(0)
+      1
 
-    iex> [1, {2, 3}] |> Indifferent.path([1][0])
-    2
+      iex> [1, {2, 3}] |> Indifferent.path([1][0])
+      2
 
-    iex> [1, [2, 3]] |> Indifferent.path([1][-1])
-    3
+      iex> [1, [2, 3]] |> Indifferent.path([1][-1])
+      3
 
-    iex> [9, %{"c" => {:ok, %{"e" => 4}}}] |> Indifferent.path(1.c["1"].e)
-    4
+      iex> [9, %{"c" => {:ok, %{"e" => 4}}}] |> Indifferent.path(1.c["1"].e)
+      4
 
   """
   defmacro path(data, path) do
-    path_quoted(data, path)
+    if Keyword.keyword?(path) do
+      paths_quoted(data, path)
+    else
+      path_quoted(data, path)
+    end
   end
 
   defp path_quoted(data, path) do
@@ -90,33 +93,75 @@ defmodule Indifferent do
     end
   end
 
-  @doc """
-  Returns a Keyword of named values at several indifferent paths.
-
-  ## Examples
-
-    iex> [x: v] = %{"a" => 1, "b" => %{"c" => 2}} |> Indifferent.paths(x: b.c)
-    ...> v
-    2
-
-  """
-  defmacro paths(data, names_and_paths) do
+  defp paths_quoted(data, names_and_paths) do
     var = Macro.var(:data, __MODULE__)
     matches =
-      for {name, path} <- names_and_paths,
+    for {name, path} <- names_and_paths,
       do: {name, path_quoted(var, path)}
     quote do
       fn unquote(var) -> unquote(matches) end.(unquote(data))
     end
   end
 
+  @doc """
+  Returns a Keyword of named values at several indifferent paths.
+
+  ## Examples
+
+      iex> [x: v] = %{"a" => 1, "b" => %{"c" => 2}} |> Indifferent.paths(x: b.c)
+      ...> v
+      2
+
+  """
+  defmacro paths(data, names_and_paths) do
+    paths_quoted(data, names_and_paths)
+  end
+
+  @doc ~S"""
+
+  ## Examples
+
+      iex> require Indifferent
+      iex> System.put_env("COLOR", "red")
+      iex> Indifferent.read(System.get_env.COLOR)
+      "red"
+
+      iex> require Indifferent
+      iex> data = %{"x" => [1, 2]}
+      iex> Indifferent.read(data.x[-1])
+      2
+
+      iex> require Indifferent
+      iex> Indifferent.read(%{"x" => {1, 2}}.x[1])
+      2
+  """
+  defmacro read(path) do
+    if Keyword.keyword?(path) do
+      reads_quoted(path)
+    else
+      read_quoted(path)
+    end
+  end
+
+  defp read_quoted(path) do
+    [data | keys] = Indifferent.Path.flatten(path)
+    quote do
+      Indifferent.get_in(unquote(data), unquote(keys))
+    end
+  end
+
+  defp reads_quoted(names_and_paths) do
+    for {name, path} <- names_and_paths, do: {name, read_quoted(path)}
+  end
+
+
   @doc ~S"""
   Returns an accessor-function for the given path, intended to be used by Kernel functions.
 
   ## Examples
 
-     iex> Kernel.get_in(%{"a" => {0, 1}}, Indifferent.path(a["1"]))
-     1
+      iex> Kernel.get_in(%{"a" => {0, 1}}, Indifferent.path(a["1"]))
+      1
 
   """
   defmacro path(path) do

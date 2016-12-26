@@ -1,5 +1,5 @@
 defmodule Indifferent.Transform do
-
+  @moduledoc false
 
   def key_id(x, _indifferent), do: {:ok, x}
 

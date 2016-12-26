@@ -14,7 +14,7 @@ on the type of keys (atoms or binaries) akin to the features of Rails' HashWithI
 
     ```elixir
     def deps do
-      [{:indifferent, "~> 0.4"}]
+      [{:indifferent, "~> 0.5"}]
     end
     ```
 
@@ -56,13 +56,13 @@ iex> Kernel.get_in(Indifferent.access(%{"a" => 1}), [:a])
 
 ##
 # Or you can auto wrap data by using Indifferent's version of
-# `get_in`, `get_and_update_in`, `pop`
+# `get_in/2`, `get_and_update_in/3`, `pop_in/2`
 iex> Indifferent.get_and_update_in(%{"a" => %{"x" => 1}}, [:a, :x], fn x -> {x * 2, x * 4} end)
 {2, %{"a" => %{"x" => 4}}}
 
 
 ##
-# Indifferent `path` lets you use any syntax you want for
+# Indifferent `path/2` lets you use any syntax you want for
 # accessing the nested value you need.
 iex> %{"b" => %{"c" => %{"d" => %{"e" => 4}}}} |> Indifferent.path(b["c"][:d].e)
 4
@@ -78,9 +78,21 @@ iex> Kernel.get_in(%{"a" => {0, 2}}, Indifferent.path(a["1"]))
 2
 
 ##
-# `paths` takes a Keyword of paths and returns a keyword of values
-iex> %{"b" => [1, 2]} |> Indifferent.paths(x: b[-1])
+# `path/2` can also take a Keyword of paths and returns a keyword of values
+iex> %{"b" => [1, 2]} |> Indifferent.path(x: b[-1])
 [x: 2]
 
+##
+# The `read/1` macro is a convenience that reads an indifferent path on the first value
+iex> System.put_env("COLOR", "red")
+iex> Indifferent.read(System.get_env.COLOR)
+"red"
+
+##
+# Just like `path/2`, the `read/1` macro can also take a Keyword of named things to read
+iex> System.put_env("COLOR", "red")
+iex> Process.put(:color, "blue")
+iex> Indifferent.read(a: System.get_env.COLOR, b: Process.get.blue)
+[a: "red", b: "blue"]
 
 ```
