@@ -14,7 +14,7 @@ on the type of keys (atoms or binaries) akin to the features of Rails' HashWithI
 
     ```elixir
     def deps do
-      [{:indifferent, "~> 0.7"}]
+      [{:indifferent, "~> 0.8"}]
     end
     ```
 
@@ -29,6 +29,9 @@ on the type of keys (atoms or binaries) akin to the features of Rails' HashWithI
 ## Usage
 
 Be sure to look at the [documentation](https://hexdocs.pm/indifferent) for more examples.
+
+### Indifferent module
+
 
 ```elixir
 
@@ -106,3 +109,39 @@ iex> Indifferent.read(a: System.get_env.COLOR, b: Process.get.color)
 [a: "red", b: "blue"]
 
 ```
+
+### Indifferent sigils
+
+The `~i` and `~I` sigils are shortcuts for the API
+previously described.
+
+```elixir
+iex> import Indifferent.Sigils
+Indifferent.Sigils
+
+##
+# `~i` is the sigil for `Indifferent.read/1`
+iex> data = %{"a" => [b: {10, 20}]}
+iex> ~i(data.a.b[1])
+20
+
+# When piped a value it will act just like `Indifferent.path/2`
+iex> data = %{"a" => [b: {10, 20}]}
+iex> data |> ~i(a.b[1])
+20
+
+
+##
+# `~I` is the sigil version of `Indifferent.path/1`
+# for use with Kernel access functions.
+
+iex> data = %{"a" => [b: {10, 20}]}
+iex> Kernel.get_in(data, ~I(a.b[1]))
+20
+
+iex> data = %{"a" => [b: {10, 20}]}
+iex> Kernel.pop_in(data, ~I(a.b))
+{{10, 20}, %{"a" => []}}
+
+```
+
