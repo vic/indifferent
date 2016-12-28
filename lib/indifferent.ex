@@ -77,10 +77,19 @@ defmodule Indifferent do
       iex> [9, %{"c" => {:ok, %{"e" => 4}}}] |> Indifferent.path(1.c["1"].e)
       4
 
+  This macro can take a keyword of named indifferent paths and return a keyword
+  of corresponding to their values.
+
+  ## Examples
+
+      iex> [x: v] = %{"a" => 1, "b" => %{"c" => 2}} |> Indifferent.path(x: b.c)
+      ...> v
+      2
+
   """
   defmacro path(data, path) do
     if Keyword.keyword?(path) do
-      paths_quoted(data, path)
+      named_paths_quoted(data, path)
     else
       path_quoted(data, path)
     end
@@ -93,7 +102,7 @@ defmodule Indifferent do
     end
   end
 
-  defp paths_quoted(data, names_and_paths) do
+  defp named_paths_quoted(data, names_and_paths) do
     var = Macro.var(:data, __MODULE__)
     matches =
     for {name, path} <- names_and_paths,
@@ -103,41 +112,32 @@ defmodule Indifferent do
     end
   end
 
-  @doc """
-  Returns a Keyword of named values at several indifferent paths.
-
-  ## Examples
-
-      iex> [x: v] = %{"a" => 1, "b" => %{"c" => 2}} |> Indifferent.paths(x: b.c)
-      ...> v
-      2
-
-  """
-  defmacro paths(data, names_and_paths) do
-    paths_quoted(data, names_and_paths)
-  end
-
   @doc ~S"""
+  Evaluates the first expression and then access an indifferent path on it
+
+  For example `read(foo().bar)` will evaluate `foo()` and then access `bar`
+  on its result.
+
+  This macro can take a keyword of named things to read. However note that
+  `read(a: foo().bar, b: foo().baz)` will call `foo()` twice. If you dont
+  want that, assign its value to a variable before.
 
   ## Examples
 
-      iex> require Indifferent
       iex> System.put_env("COLOR", "red")
       iex> Indifferent.read(System.get_env.COLOR)
       "red"
 
-      iex> require Indifferent
       iex> data = %{"x" => [1, 2]}
       iex> Indifferent.read(data.x[-1])
       2
 
-      iex> require Indifferent
       iex> Indifferent.read(%{"x" => {1, 2}}.x[1])
       2
   """
   defmacro read(path) do
     if Keyword.keyword?(path) do
-      reads_quoted(path)
+      named_reads_quoted(path)
     else
       read_quoted(path)
     end
@@ -150,7 +150,7 @@ defmodule Indifferent do
     end
   end
 
-  defp reads_quoted(names_and_paths) do
+  defp named_reads_quoted(names_and_paths) do
     for {name, path} <- names_and_paths, do: {name, read_quoted(path)}
   end
 
@@ -168,7 +168,7 @@ defmodule Indifferent do
     keys = Indifferent.Path.expand(path)
     quote do
       unquote(keys) |> Enum.map(&Indifferent.at/1)
-    end
+   end
   end
 
 
