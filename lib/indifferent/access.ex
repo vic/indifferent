@@ -120,9 +120,7 @@ defmodule Indifferent.Access do
   end
 
   defp accessor(data) do
-    if Keyword.keyword?(data),
-    do: Indifferent.Accessor.Keyword,
-    else: Indifferent.Accessor
+    Indifferent.Accessor.Impl.accessor(data)
   end
 
   defp fn_get_and_update(on, key) do

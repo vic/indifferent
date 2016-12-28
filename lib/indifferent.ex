@@ -80,6 +80,14 @@ defmodule Indifferent do
       iex> [9, %{"c" => {:ok, %{"e" => 4}}}] |> Indifferent.path(1.c["1"].e)
       4
 
+      # accessing on nil always returns nil
+      iex> nil |> Indifferent.path(foo.bar)
+      nil
+
+      # structs are treated just like maps
+      iex> %User{name: "john"} |> Indifferent.path(name)
+      "john"
+
   This macro can take a keyword of named indifferent paths and return a keyword
   of corresponding to their values.
 
