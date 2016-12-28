@@ -74,6 +74,9 @@ defmodule Indifferent do
       iex> [1, [2, 3]] |> Indifferent.path([1][-1])
       3
 
+      iex> [1, [2, 3]] |> Indifferent.path([2 - 1][0 + 1])
+      3
+
       iex> [9, %{"c" => {:ok, %{"e" => 4}}}] |> Indifferent.path(1.c["1"].e)
       4
 

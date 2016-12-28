@@ -9,8 +9,8 @@ defmodule Indifferent.Path do
 
   def flatten(path), do: flatten(path, [])
 
-  defp literal({a, _, x}) when is_atom(x), do: a
-  defp literal(a) when is_atom(a) or is_binary(a) or is_number(a), do: a
+  defp literal({a, _, x}) when x == nil or x == Elixir, do: a
+  defp literal(a), do: a
 
   defp flatten({{:., _, [Access, :get]}, _, [a, b]}, seen) do
     flatten(a, []) ++ [b | seen]
