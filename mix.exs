@@ -3,7 +3,7 @@ defmodule Indifferent.Mixfile do
 
   def project do
     [app: :indifferent,
-     version: "0.8.1",
+     version: "0.8.2",
      elixir: "~> 1.3",
      description: description(),
      package: package(),

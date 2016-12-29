@@ -33,6 +33,23 @@ defmodule Indifferent.Sigils.Internal do
     end
   end
 
+  def named_path_quoted(data, names_and_paths, modifiers) do
+    var = Macro.var(:data, __MODULE__)
+    matches = for {name, path} <- names_and_paths,
+      do: {name, path_quoted(var, path, modifiers)}
+    quote do
+      fn unquote(var) -> unquote(matches) end.(unquote(data))
+    end
+  end
+
+  def path_quoted(data, path, modifiers) do
+    path = Macro.escape(path)
+    quote do
+      unquote(__MODULE__).get_in(
+        unquote(data), fn x -> x end, unquote(path), unquote(modifiers))
+    end
+  end
+
   def indifferent(data, _modifiers = '') do
     Indifferent.access(data)
   end
@@ -106,13 +123,18 @@ defmodule Indifferent.Sigils do
        iex> data |> ~i(a.b[1])
        20
 
+      iex> data = %{"a" => [b: {10, 20}]}
+      iex> data |> ~i([x: a.b[1]])
+      [x: 20]
+
   """
   defmacro sigil_i(data, sigil, modifiers) do
     import __MODULE__.Internal
-    path = sigil_to_quoted!(sigil, __CALLER__) |> Macro.escape
-    quote do
-      unquote(__MODULE__).Internal.get_in(
-        unquote(data), fn x -> x end, unquote(path), unquote(modifiers))
+    path = sigil_to_quoted!(sigil, __CALLER__)
+    if Keyword.keyword?(path) do
+      named_path_quoted(data, path, modifiers)
+    else
+      path_quoted(data, path, modifiers)
     end
   end
 

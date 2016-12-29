@@ -115,8 +115,7 @@ defmodule Indifferent do
 
   defp named_paths_quoted(data, names_and_paths) do
     var = Macro.var(:data, __MODULE__)
-    matches =
-    for {name, path} <- names_and_paths,
+    matches = for {name, path} <- names_and_paths,
       do: {name, path_quoted(var, path)}
     quote do
       fn unquote(var) -> unquote(matches) end.(unquote(data))
