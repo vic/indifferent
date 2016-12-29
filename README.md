@@ -14,7 +14,7 @@ on the type of keys (atoms or binaries) akin to the features of Rails' HashWithI
 
     ```elixir
     def deps do
-      [{:indifferent, "~> 0.8"}]
+      [{:indifferent, "~> 0.9"}]
     end
     ```
 

@@ -1,11 +1,37 @@
 defmodule Indifferent.Sigils.Internal do
   @moduledoc false # internal api
 
-  def sigil_to_quoted!({:<<>>, _, [path_code]}, env) do
-    Code.string_to_quoted!(path_code, file: env.file, line: env.line)
+  def sigil_i(sigil, modifiers, env) do
+    path = sigil_to_quoted!(sigil, env)
+    if Keyword.keyword?(path) do
+      named_reads_quoted(path, modifiers)
+    else
+      read_quoted(path, modifiers)
+    end
   end
 
-  # internal api
+  def sigil_i(data, sigil, modifiers, env) do
+    path = sigil_to_quoted!(sigil, env)
+    piped_sigil_i(data, path, modifiers)
+  end
+
+  def sigil_I(sigil, modifiers, env) do
+    path = sigil_to_quoted!(sigil, env) |> Macro.escape
+    quote do
+      [fn
+        :get, data, next ->
+          unquote(__MODULE__).get_in(
+            data, next, unquote(path), unquote(modifiers))
+        :get_and_update, data, next ->
+          unquote(__MODULE__).get_and_update_in(
+            data, next, unquote(path), unquote(modifiers))
+      end]
+    end
+  end
+
+  defp sigil_to_quoted!({:<<>>, _, [path_code]}, env) do
+    Code.string_to_quoted!(path_code, file: env.file, line: env.line)
+  end
 
   def get_in(data, next, path, modifiers) do
     data = indifferent(data, modifiers)
@@ -19,11 +45,11 @@ defmodule Indifferent.Sigils.Internal do
     Indifferent.get_and_update_in(data, keys, next)
   end
 
-  def named_reads_quoted(names_and_paths, modifiers) do
+  defp named_reads_quoted(names_and_paths, modifiers) do
     for {name, path} <- names_and_paths, do: {name, read_quoted(path, modifiers)}
   end
 
-  def read_quoted(path, modifiers) do
+  defp read_quoted(path, modifiers) do
     [data | keys] = Indifferent.Path.flatten(path)
     indifferent_data = quote do
       unquote(__MODULE__).indifferent(unquote(data), unquote(modifiers))
@@ -33,7 +59,7 @@ defmodule Indifferent.Sigils.Internal do
     end
   end
 
-  def named_path_quoted(data, names_and_paths, modifiers) do
+  defp named_path_quoted(data, names_and_paths, modifiers) do
     var = Macro.var(:data, __MODULE__)
     matches = for {name, path} <- names_and_paths,
       do: {name, path_quoted(var, path, modifiers)}
@@ -42,7 +68,28 @@ defmodule Indifferent.Sigils.Internal do
     end
   end
 
-  def path_quoted(data, path, modifiers) do
+  defp tuple_path_quoted(data, paths, modifiers) do
+    var = Macro.var(:data, __MODULE__)
+    matches = for path <- paths, do: path_quoted(var, path, modifiers)
+    quote do
+      fn unquote(var) -> {unquote_splicing(matches)} end.(unquote(data))
+    end
+  end
+
+  defp piped_sigil_i(data, {:{}, _, paths}, modifiers),
+  do: tuple_path_quoted(data, paths, modifiers)
+  defp piped_sigil_i(data, {a, b}, modifiers),
+  do: tuple_path_quoted(data, [a, b], modifiers)
+  defp piped_sigil_i(data, paths, modifiers) when is_list(paths) do
+    if Keyword.keyword?(paths),
+    do: named_path_quoted(data, paths, modifiers),
+    else: path_quoted(data, paths, modifiers)
+  end
+  defp piped_sigil_i(data, path, modifiers),
+  do: path_quoted(data, path, modifiers)
+
+
+  defp path_quoted(data, path, modifiers) do
     path = Macro.escape(path)
     quote do
       unquote(__MODULE__).get_in(
@@ -76,13 +123,7 @@ defmodule Indifferent.Sigils do
 
   """
   defmacro sigil_i(sigil, modifiers) do
-    import __MODULE__.Internal
-    path = sigil_to_quoted!(sigil, __CALLER__)
-    if Keyword.keyword?(path) do
-      named_reads_quoted(path, modifiers)
-    else
-      read_quoted(path, modifiers)
-    end
+    __MODULE__.Internal.sigil_i(sigil, modifiers, __CALLER__)
   end
 
   @doc """
@@ -100,18 +141,7 @@ defmodule Indifferent.Sigils do
 
   """
   defmacro sigil_I(sigil, modifiers) do
-    import __MODULE__.Internal
-    path = sigil_to_quoted!(sigil, __CALLER__) |> Macro.escape
-    quote do
-      [fn
-        :get, data, next ->
-          unquote(__MODULE__).Internal.get_in(
-            data, next, unquote(path), unquote(modifiers))
-        :get_and_update, data, next ->
-          unquote(__MODULE__).Internal.get_and_update_in(
-            data, next, unquote(path), unquote(modifiers))
-      end]
-    end
+    __MODULE__.Internal.sigil_I(sigil, modifiers, __CALLER__)
   end
 
   @doc """
@@ -119,9 +149,13 @@ defmodule Indifferent.Sigils do
 
   ## Examples
 
-       iex> data = %{"a" => [b: {10, 20}]}
-       iex> data |> ~i(a.b[1])
-       20
+      iex> data = %{"a" => [b: {10, 20}]}
+      iex> data |> ~i(a.b[1])
+      20
+
+      iex> data = %{"a" => 1, "b" => %{"c" => 2}}
+      iex> data |> ~i({a, b.c})
+      {1, 2}
 
       iex> data = %{"a" => [b: {10, 20}]}
       iex> data |> ~i([x: a.b[1]])
@@ -129,13 +163,7 @@ defmodule Indifferent.Sigils do
 
   """
   defmacro sigil_i(data, sigil, modifiers) do
-    import __MODULE__.Internal
-    path = sigil_to_quoted!(sigil, __CALLER__)
-    if Keyword.keyword?(path) do
-      named_path_quoted(data, path, modifiers)
-    else
-      path_quoted(data, path, modifiers)
-    end
+    __MODULE__.Internal.sigil_i(data, sigil, modifiers, __CALLER__)
   end
 
 end

@@ -88,23 +88,28 @@ defmodule Indifferent do
       iex> %User{name: "john"} |> Indifferent.path(name)
       "john"
 
-  This macro can take a keyword of named indifferent paths and return a keyword
-  of corresponding to their values.
 
-  ## Examples
+      # Can be given a tuple of paths
+      iex> %{"a" => 1, "b" => %{"c" => 2}} |> Indifferent.path({a, b.c})
+      {1, 2}
 
-      iex> [x: v] = %{"a" => 1, "b" => %{"c" => 2}} |> Indifferent.path(x: b.c)
-      ...> v
-      2
+      # If given a Keyword of paths, the result will be a keyword of values
+      iex> %{"a" => 1, "b" => %{"c" => 2}} |> Indifferent.path(x: b.c)
+      [x: 2]
 
   """
-  defmacro path(data, path) do
-    if Keyword.keyword?(path) do
-      named_paths_quoted(data, path)
+  defmacro path(data, path)
+  defmacro path(data, {:{}, _, paths}), do: tuple_paths_quoted(data, paths)
+  defmacro path(data, {a, b}), do: tuple_paths_quoted(data, [a, b])
+  defmacro path(data, paths) when is_list(paths) do
+    if Keyword.keyword?(paths) do
+      named_paths_quoted(data, paths)
     else
-      path_quoted(data, path)
+      path_quoted(data, paths)
     end
   end
+  defmacro path(data, path), do: path_quoted(data, path)
+
 
   defp path_quoted(data, path) do
     keys = Indifferent.Path.expand(path)
@@ -119,6 +124,14 @@ defmodule Indifferent do
       do: {name, path_quoted(var, path)}
     quote do
       fn unquote(var) -> unquote(matches) end.(unquote(data))
+    end
+  end
+
+  defp tuple_paths_quoted(data, paths) do
+    var = Macro.var(:data, __MODULE__)
+    matches = for path <- paths, do: path_quoted(var, path)
+    quote do
+      fn unquote(var) -> {unquote_splicing(matches)} end.(unquote(data))
     end
   end
 
