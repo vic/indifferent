@@ -3,11 +3,7 @@ defmodule Indifferent.Sigils.Internal do
 
   def sigil_i(sigil, modifiers, env) do
     path = sigil_to_quoted!(sigil, env)
-    if Keyword.keyword?(path) do
-      named_reads_quoted(path, modifiers)
-    else
-      read_quoted(path, modifiers)
-    end
+    read_sigil_i(path, modifiers)
   end
 
   def sigil_i(data, sigil, modifiers, env) do
@@ -49,6 +45,13 @@ defmodule Indifferent.Sigils.Internal do
     for {name, path} <- names_and_paths, do: {name, read_quoted(path, modifiers)}
   end
 
+  defp tuple_read_quoted(paths, modifiers) do
+    reads = for path <- paths, do: read_quoted(path, modifiers)
+    quote do
+      {unquote_splicing(reads)}
+    end
+  end
+
   defp read_quoted(path, modifiers) do
     [data | keys] = Indifferent.Path.flatten(path)
     indifferent_data = quote do
@@ -76,18 +79,28 @@ defmodule Indifferent.Sigils.Internal do
     end
   end
 
+  defp piped_sigil_i(data, path, modifiers)
   defp piped_sigil_i(data, {:{}, _, paths}, modifiers),
   do: tuple_path_quoted(data, paths, modifiers)
   defp piped_sigil_i(data, {a, b}, modifiers),
   do: tuple_path_quoted(data, [a, b], modifiers)
-  defp piped_sigil_i(data, paths, modifiers) when is_list(paths) do
+  defp piped_sigil_i(data, paths, modifiers) do
     if Keyword.keyword?(paths),
     do: named_path_quoted(data, paths, modifiers),
     else: path_quoted(data, paths, modifiers)
   end
-  defp piped_sigil_i(data, path, modifiers),
-  do: path_quoted(data, path, modifiers)
 
+
+  defp read_sigil_i(path, modifiers)
+  defp read_sigil_i({:{}, _, paths}, modifiers),
+  do: tuple_read_quoted(paths, modifiers)
+  defp read_sigil_i({a, b}, modifiers),
+  do: tuple_read_quoted([a, b], modifiers)
+  defp read_sigil_i(path, modifiers) do
+    if Keyword.keyword?(path),
+    do: named_reads_quoted(path, modifiers),
+    else: read_quoted(path, modifiers)
+  end
 
   defp path_quoted(data, path, modifiers) do
     path = Macro.escape(path)
@@ -116,6 +129,10 @@ defmodule Indifferent.Sigils do
        iex> data = %{"a" => [b: {10, 20}]}
        iex> ~i(data.a.b[1])
        20
+
+      iex> data = %{"a" => 1, "b" => %{"c" => 2}}
+      iex> ~i({data.a, data.b.c})
+      {1, 2}
 
        iex> data = %{"a" => [b: {10, 20}]}
        iex> ~i([x: data.a.b[0], y: data.a.b[1]])
