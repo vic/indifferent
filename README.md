@@ -1,5 +1,7 @@
 # Indifferent
 [![Build Status](https://travis-ci.org/vic/indifferent.svg?branch=master)](https://travis-ci.org/vic/indifferent)
+[![help maintain this lib](https://img.shields.io/badge/looking%20for%20maintainer-DM%20%40vborja-663399.svg)](https://twitter.com/vborja)
+
 
 This library provides a wrapper for indifferent access on maps, structs, lists and tuples.
 
