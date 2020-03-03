@@ -14,19 +14,19 @@ on the type of keys (atoms or binaries) akin to the features of Rails' HashWithI
 
   1. Add `indifferent` to your list of dependencies in `mix.exs`:
 
-    ```elixir
-    def deps do
-      [{:indifferent, "~> 0.9"}]
-    end
-    ```
+```elixir
+  def deps do
+    [{:indifferent, "~> 0.9"}]
+  end
+```
 
   2. Ensure `indifferent` is started before your application:
 
-    ```elixir
-    def application do
-      [applications: [:indifferent]]
-    end
-    ```
+```elixir
+  def application do
+    [applications: [:indifferent]]
+  end
+```
 
 ## Usage
 
